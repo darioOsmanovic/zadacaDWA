@@ -1,0 +1,14 @@
+#drop_markdown_text{
+	display: block;
+	margin-left: 15%;
+	margin-top: 15%;
+	width: 70%;	
+	min-height: 70%;
+	border: 1px dotted #333333;
+	position: relative;
+	text-align: center;
+	font-size: 22px;
+}
+.over{		
+	border: 2px dotted #111111!important;
+}

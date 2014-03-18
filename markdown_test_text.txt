@@ -1,0 +1,185 @@
+------
+
+`rackup` je koristan za postavljanje aplikacija (deployment) na Internet.
+
+Pod predpostavkom: 
+
+* da je u sistemu instaliran [Heroku Toolbelt](https://toolbelt.heroku.com/) i [Git](http://git-scm.com/);
+* da je instaliran `bundle` gem (`sudo gem install bundle`);
+* da su fajlovi `myapp.rb` i `config.ru` snimljeni u direktoriju 'app1'
+
+Slijedeca sekvenca komandi postavila bi  `rack` aplikaciju na `Heroku` servis.
+
+``` bash
+:&gt; cd app1/
+:&gt; bundle init
+:&gt; echo "gem 'rack'" &gt;&gt; Gemfile 
+:&gt; bundle install
+:&gt; git init
+:&gt; git add .
+:&gt; git commit -m "app v0.01"
+:&gt; heroku login
+:&gt; heroku create
+:&gt; git push heroku master
+```
+
+-----
+
+# middleware
+
+`Middleware` je `rack` aplikacija koja enkapsulira unutrašnju `rack` aplikaciju.
+
+* slicno kao obicna aplikacija treba da implementira `call` metod;
+* za razliku od obicne aplikacije, mora biti inicijaliziran unutrašnjom aplikacijom.
+
+`Rack::Builder` kreira middleware lanac u obliku stack-a, na cijem se dnu nalazi rack aplikacija koju treba izvršiti.
+
+* `use` dodaje middleware u stack;
+* `run` oznacava aplikaciju u stack-u;
+* `map` mapira lanac `rack` aplikacija sa adresom.
+
+----
+
+``` ruby
+require 'rack'
+class MojApp
+  def self.call(env)
+    [200,{"Content-Type"=&gt;"text/plain"},["Pozdrav!!"]]
+  end
+end
+class Mjerac
+  def initialize(app)
+    @app = app
+  end
+  def call(env)
+    pocetak = Time.now
+    status, headers, body = @app.call env
+    headers['X-Vrijeme'] = (Time.now - pocetak).to_s
+    [status, headers, body]
+  end
+end
+app = Rack::Builder.new do
+  use Mjerac
+  run MojApp
+end
+Rack::Handler::WEBrick.run app
+```
+
+----
+
+``` ruby
+# mojapp.rb
+class MojApp
+  def self.call(env)
+    [200,{"Content-Type"=&gt;"text/plain"},["Pozdrav!!"]]
+  end
+end
+```
+
+``` ruby
+# config.ru
+require './mojapp'
+use Rack::Static, :urls =&gt; ['/javno']
+use Rack::Auth::Basic, "Zasticena zona" do |username, password|
+  [username, password] == ['amer', 'amer']
+end
+run MojApp
+```
+
+----
+
+# Sinatra
+
+Sinatra je DSL (Domain Specific Language) za kreiranje web aplikacija i servisa.
+
+* funkcioniše kao obicna `rack` aplikacija;
+* ne postavlja nikakve konvencije;
+* ne postavlja nikakvu fajl strukturu za aplikaciju.
+* baziran na rutama.
+
+--- 
+
+Ruta se defnira pomocu metoda, url uzorka i bloka.
+
+* metod odgovara HTTP glagolima: `get`, `post`, `put`, `delete`
+* url uzorak može sadržavati 
+  * imenovane parametre pomocu `:`, koji ce biti dostupni unutar `params` hash-a
+  * `splat` parametre pomocu `*`, koji ce biti dostupni unutar `params` hash-a pod kljucem `splat`.
+  * `regexp` izraze pomocu `%r{izraz}`
+* unutar metoda konstruiše se odgovor na zahtijev.
+
+
+Postoje dva pristupa za Sinatra aplikacije
+
+* `micro-app`;
+* modularana aplikacija.
+
+-----
+
+Primjer `micro-app`:
+
+``` ruby
+# app1.rb
+require 'sinatra'
+
+get '/pozdrav/:ime' do
+  "Hello #{params[:ime]}"
+end
+
+get '/reci/*/za/*' do
+  params[:splat]
+end
+
+get '/fajl/*.*' do |i,e|
+  "ime: #{i}, ext: #{e}"
+end
+
+get %r{/uzorak/(\w+)} do |c|
+  c
+end
+```
+
+----
+
+pokretanje:
+
+``` bash
+ruby app1.rb
+```
+
+ili
+
+``` ruby
+# config.ru
+require './app1'
+run Sinatra::Application
+```
+
+
+----
+
+
+Primjer modularna aplikacija:
+
+``` ruby
+# app2.rb
+require 'sinatra/base'
+class MojApp &lt; Sinatra::Base
+  get '/pozdrav/:ime' do
+    "Hello #{params[:ime]}"
+  end
+  get '/reci/*/za/*' do
+    params[:splat]
+  end
+  get '/fajl/*.*' do |i,e|
+    "ime: #{i}, ext: #{e}"
+  end
+  get %r{/uzorak/(\w+)} do |c|
+    c
+  end
+end
+
+Rack::Handler::WEBrick.run MojApp
+```
+
+----

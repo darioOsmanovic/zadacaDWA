@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=1024, user-scalable=no">
+
+  <title>Your deck.js Presentation</title>
+
+  <link rel="stylesheet" media="screen" href="core/deck.core.css">
+  <link rel="stylesheet" media="screen" href="extensions/scale/deck.scale.css">  
+  <link rel="stylesheet" media="screen" href="themes/style/web-2.0.css">
+  <link rel="stylesheet" media="screen" href="themes/transition/horizontal-slide.css">
+  <link rel="stylesheet" media="print" href="core/print.css">  
+  <link rel="stylesheet" media="screen" href="css/custom.css">
+  <script src="modernizr.custom.js"></script>
+   <script src="highlight/highlight.pack.js"></script>
+	<script>
+		console.log("nest");
+		 hljs.configure({tabReplace: '    '});
+		 hljs.initHighlightingOnLoad();
+
+		/*$(document).ready(function() {
+			console.log("usao");
+		  $('pre code').each(function(i, e) {
+		  console.log("nest 12");
+		  hljs.highlightBlock(e)
+		  });
+		  
+		});*/
+		
+		
+	</script>
+</head>
+<body>
+  <div class="deck-container">
+
+    <div id="drop_markdown_text" drop>
+		Drop Your MarkDown text
+	</div>
+
+  </div>
+
+<script src="jquery.min.js"></script>
+<script src="core/deck.core.js"></script>
+
+<script src="extensions/scale/deck.scale.js"></script>
+<script src="javascript/markdown.js"></script>
+<script src="javascript/custom.js"></script>
+<script>
+
+  function testDetection() {
+  console.log("usao.sagf");
+    if (!hljs.initHighlighting.called) {
+      window.setTimeout(testDetection, 500);
+      return;
+    }
+    var table = document.getElementById('autotest');
+    var tds = table.getElementsByTagName('TD');
+    var failed = [];
+    for (var i = 0; i < tds.length; i++) {
+      var tdClass = tds[i].className;
+      if (!hljs.getLanguage(tdClass)) {
+        tds[i].parentNode.style.display = 'none';
+        continue;
+      }
+      var code = tds[i].getElementsByTagName('CODE')[0];
+      var langClass = code.className.replace('hljs', '').trim();
+      var passed = tdClass == langClass;
+      var result = document.createElement('DIV');
+      result.className = 'test';
+      result.innerHTML = '<var class="'+ (passed ? 'passed' : 'failed') +'">' + langClass + '</var>';
+      result.innerHTML += ' (' + code.result.re + ')';
+      if (code.second_best) {
+        result.innerHTML += '<br>' + code.second_best.language + ' (' + code.second_best.re + ')';
+      }
+      tds[i].parentNode.getElementsByTagName('th')[0].appendChild(result);
+      if (!passed) {
+        failed.push(tdClass);
+      }
+    }
+    var summary = document.getElementById('summary');
+    summary.innerHTML = failed.length ? ('Failed tests: ' + failed.join(', ')) : 'All tests passed';
+    summary.className = failed.length ? 'failed' : 'passed';
+  }
+  testDetection();
+</script>
+</body>
+</html>
